@@ -1,0 +1,3 @@
+include ':loginModule'
+include ':app'
+rootProject.name = "YoFoddies"
