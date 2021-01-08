@@ -2,21 +2,27 @@ package com.example.loginmodule.ui.login
 
 import android.app.Activity
 import android.content.Intent
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
 import android.os.Bundle
-import androidx.annotation.StringRes
-import androidx.appcompat.app.AppCompatActivity
+import android.os.Handler
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.Gravity
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.Toast
+import androidx.annotation.StringRes
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
+import androidx.transition.Slide
+import androidx.transition.TransitionManager
 import com.example.loginmodule.R
 import com.example.loginmodule.utils.Constants.USERNAMEKEY
+import kotlinx.android.synthetic.main.activity_login_new.*
+
 
 class LoginActivity : AppCompatActivity() {
 
@@ -24,13 +30,13 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        setContentView(R.layout.activity_login)
-
+        setContentView(R.layout.activity_login_new)
         val username = findViewById<EditText>(R.id.username)
         val password = findViewById<EditText>(R.id.password)
         val login = findViewById<Button>(R.id.login)
         val loading = findViewById<ProgressBar>(R.id.loading)
+
+        displayLayout()
 
         loginViewModel = ViewModelProviders.of(this, LoginViewModelFactory())
             .get(LoginViewModel::class.java)
@@ -39,6 +45,7 @@ class LoginActivity : AppCompatActivity() {
             val loginState = it ?: return@Observer
 
             // disable login button unless both username / password is valid
+            login.isClickable = loginState.isDataValid
             login.isEnabled = loginState.isDataValid
 
             if (loginState.usernameError != null) {
@@ -109,10 +116,9 @@ class LoginActivity : AppCompatActivity() {
     private fun updateUiWithUser(model: LoggedInUserView) {
         val welcome = getString(R.string.welcome)
         val displayName = model.displayName
-        // TODO : initiate successful logged in experience
         Toast.makeText(
             applicationContext,
-            "$welcome $displayName",
+            "Login Successful",
             Toast.LENGTH_LONG
         ).show()
 
@@ -120,6 +126,17 @@ class LoginActivity : AppCompatActivity() {
 
     private fun showLoginFailed(@StringRes errorString: Int) {
         Toast.makeText(applicationContext, errorString, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun displayLayout() {
+        val TIME_OUT = 100L
+        Handler().postDelayed({
+            val transition = Slide(Gravity.RIGHT)
+            transition.duration = 600L
+            transition.addTarget(R.id.background_layout)
+            TransitionManager.beginDelayedTransition(main_layout, transition)
+            background_layout?.setVisibility(View.VISIBLE)
+        }, TIME_OUT)
     }
 }
 
