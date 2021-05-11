@@ -19,9 +19,12 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.transition.Slide
 import androidx.transition.TransitionManager
+import com.example.custompreferences.Constants.LOGIN_PREFERENCE
 import com.example.loginmodule.R
-import com.example.loginmodule.utils.Constants.USERNAMEKEY
-import kotlinx.android.synthetic.main.activity_login_new.*
+import com.example.custompreferences.Constants.USERNAMEKEY
+import com.example.custompreferences.SharedPreferenceUtils
+import com.example.custompreferences.SharedPreferenceUtils.set
+import kotlinx.android.synthetic.main.activity_login.*
 
 
 class LoginActivity : AppCompatActivity() {
@@ -30,7 +33,7 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_login_new)
+        setContentView(R.layout.activity_login)
         val username = findViewById<EditText>(R.id.username)
         val password = findViewById<EditText>(R.id.password)
         val login = findViewById<Button>(R.id.login)
@@ -68,6 +71,7 @@ class LoginActivity : AppCompatActivity() {
                     }
                     loginResult.success != null -> {
                         updateUiWithUser(loginResult.success)
+                         saveUserDetails(loginResult.success.displayName)
                         username?.text?.toString()
                     }
                     else -> ""
@@ -114,14 +118,13 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun updateUiWithUser(model: LoggedInUserView) {
-        val welcome = getString(R.string.welcome)
-        val displayName = model.displayName
+//        val welcome = getString(R.string.welcome)
+//        val displayName = model.displayName
         Toast.makeText(
             applicationContext,
             "Login Successful",
             Toast.LENGTH_LONG
         ).show()
-
     }
 
     private fun showLoginFailed(@StringRes errorString: Int) {
@@ -131,12 +134,17 @@ class LoginActivity : AppCompatActivity() {
     private fun displayLayout() {
         val TIME_OUT = 100L
         Handler().postDelayed({
-            val transition = Slide(Gravity.RIGHT)
+            val transition = Slide(Gravity.END)
             transition.duration = 600L
             transition.addTarget(R.id.background_layout)
             TransitionManager.beginDelayedTransition(main_layout, transition)
             background_layout?.setVisibility(View.VISIBLE)
         }, TIME_OUT)
+    }
+
+    private fun saveUserDetails(userName: String) {
+        val prefs = SharedPreferenceUtils.customPrefs(this, LOGIN_PREFERENCE)
+        prefs.set(USERNAMEKEY, userName)
     }
 }
 
