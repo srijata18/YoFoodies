@@ -1,3 +1,6 @@
+include ':networkModule'
+include ':registrationModule'
+include ':dashboardModule'
 include ':customPreferences'
 include ':loginModule'
 include ':app'

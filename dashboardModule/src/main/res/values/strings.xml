@@ -1,0 +1,7 @@
+<resources>
+    <string name="title_cart">Cart</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
+    <string name="location_text">No locations found</string>
+    <string name="search_restaurants">Search for restaurants, cuisines</string>
+</resources>

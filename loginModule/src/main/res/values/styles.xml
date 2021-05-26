@@ -1,4 +1,18 @@
 <resources>
 
     <style name="AppTheme" parent="Theme.MaterialComponents.Light" />
+    <style name="TextLabel" parent="TextAppearance.Design.Hint">
+        <item name="android:textSize">12dp</item>
+
+    </style>
+
+    <style name="main_input_text">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:textSize">14dp</item>
+        <item name="android:textColor">@android:color/holo_blue_dark</item>
+        <item name="background">@android:color/transparent</item>
+    </style>
+
 </resources>

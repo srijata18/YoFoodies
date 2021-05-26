@@ -5,18 +5,20 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import androidx.appcompat.app.AppCompatActivity
-import com.bumptech.glide.Glide
-import com.example.custompreferences.SharedPreferenceUtils
-import com.example.loginmodule.ui.login.LoginActivity
+import com.example.custompreferences.Constants.ACTIVITY_CODE
 import com.example.custompreferences.Constants.LOGIN_PREFERENCE
-import com.example.custompreferences.Constants.USERNAMEKEY
-import com.example.yofoddies.MainActivity
+import com.example.custompreferences.Constants.SPLASH_TIMEOUT
+import com.example.custompreferences.Constants.USERDETAILSKEY
+import com.example.custompreferences.SharedPreferenceUtils
+import com.example.dashboardmodule.DashboardActivity
+import com.example.loginmodule.ui.login.LoginActivity
+import com.example.networkmodule.data.UserDetails
 import com.example.yofoddies.R
-import kotlinx.android.synthetic.main.activity_splash.*
+import com.google.gson.Gson
 
 
 class SplashActivity : AppCompatActivity() {
-    private val ACTIVITY_CODE = 101
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash)
@@ -25,17 +27,17 @@ class SplashActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode == Activity.RESULT_OK) {
-            val userName = data?.getStringExtra(USERNAMEKEY)
-            if (userName?.isBlank() == false)
-                launchDashboardActivity(userName)
+        if (requestCode == ACTIVITY_CODE && resultCode == Activity.RESULT_OK) {
+            val userDetails: UserDetails? = data?.extras?.getParcelable(USERDETAILSKEY)
+            if (userDetails != null)
+                launchDashboardActivity(userDetails)
         }
         finish()
     }
 
-    private fun launchDashboardActivity(userName: String) {
-        val intent = Intent(this, MainActivity::class.java)
-        intent.putExtra(USERNAMEKEY, userName)
+    private fun launchDashboardActivity(userName: UserDetails?) {
+        val intent = Intent(this, DashboardActivity::class.java)
+        intent.putExtra(USERDETAILSKEY, userName)
         startActivity(intent)
         finish()
     }
@@ -47,18 +49,17 @@ class SplashActivity : AppCompatActivity() {
 
     private fun openRequiredActivity() {
         val prefs = SharedPreferenceUtils.customPrefs(this, LOGIN_PREFERENCE)
-        val userName = prefs.getString(USERNAMEKEY, "")
-        val delayMillis = 1500L
+        val gson = Gson()
+        val json: String? = prefs.getString(USERDETAILSKEY, getString(R.string.defaut_str))
+        val userDetails: UserDetails? = gson.fromJson(json, UserDetails::class.java)
+        val delayMillis = SPLASH_TIMEOUT
         Handler().postDelayed({
-            if (userName.isNullOrEmpty()) {
+            if (userDetails == null) {
                 launchLoginActivity()
             } else {
-                launchDashboardActivity(userName)
+                launchDashboardActivity(userDetails)
             }
         }, delayMillis)
-        Glide.with(this)
-            .load(R.drawable.splash)
-            .into(iv_background)
     }
 
 }

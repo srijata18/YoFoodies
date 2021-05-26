@@ -3,123 +3,144 @@ package com.example.loginmodule.ui.login
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
-import android.text.Editable
-import android.text.TextWatcher
-import android.view.Gravity
-import android.view.View
 import android.view.inputmethod.EditorInfo
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ProgressBar
-import android.widget.Toast
+import android.widget.*
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
-import androidx.transition.Slide
-import androidx.transition.TransitionManager
 import com.example.custompreferences.Constants.LOGIN_PREFERENCE
-import com.example.loginmodule.R
-import com.example.custompreferences.Constants.USERNAMEKEY
+import com.example.custompreferences.Constants.USERDETAILSKEY
 import com.example.custompreferences.SharedPreferenceUtils
 import com.example.custompreferences.SharedPreferenceUtils.set
-import kotlinx.android.synthetic.main.activity_login.*
-
+import com.example.custompreferences.views.afterTextChanged
+import com.example.custompreferences.views.gone
+import com.example.loginmodule.R
+import com.example.loginmodule.data.LoginFormState
+import com.example.loginmodule.data.LoginResult
+import com.example.loginmodule.model.LoginViewModel
+import com.example.loginmodule.model.LoginViewModelFactory
+import com.example.networkmodule.data.UserDetails
+import com.example.registrationmodule.ui.registration.RegistrationActivity
+import com.google.gson.Gson
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {
 
     private lateinit var loginViewModel: LoginViewModel
+    private var username: EditText? = null
+    private var password: EditText? = null
+    private var launchRegistration: TextView? = null
+    private var loading: ProgressBar? = null
+    private var login: Button? = null
+    private var switch: Switch? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
-        val username = findViewById<EditText>(R.id.username)
-        val password = findViewById<EditText>(R.id.password)
-        val login = findViewById<Button>(R.id.login)
-        val loading = findViewById<ProgressBar>(R.id.loading)
+        username = findViewById(R.id.et_username)
+        password = findViewById(R.id.et_password)
+        login = findViewById(R.id.login)
+        launchRegistration = findViewById(R.id.tv_login_register)
+        loading = findViewById(R.id.loading)
+        switch = findViewById(R.id.rememberMeSwitch)
 
-        displayLayout()
-
-        loginViewModel = ViewModelProviders.of(this, LoginViewModelFactory())
+        loginViewModel = ViewModelProviders.of(
+            this,
+            LoginViewModelFactory()
+        )
             .get(LoginViewModel::class.java)
 
         loginViewModel.loginFormState.observe(this@LoginActivity, Observer {
             val loginState = it ?: return@Observer
-
-            // disable login button unless both username / password is valid
-            login.isClickable = loginState.isDataValid
-            login.isEnabled = loginState.isDataValid
-
-            if (loginState.usernameError != null) {
-                username.error = getString(loginState.usernameError)
-            }
-            if (loginState.passwordError != null) {
-                password.error = getString(loginState.passwordError)
-            }
+            checkForLoginFormState(loginState)
         })
 
         loginViewModel.loginResult.observe(this@LoginActivity, Observer {
             val loginResult = it ?: return@Observer
-
-            loading.visibility = View.GONE
-            val userName =
-                when {
-                    loginResult.error != null -> {
-                        showLoginFailed(loginResult.error)
-                        ""
-                    }
-                    loginResult.success != null -> {
-                        updateUiWithUser(loginResult.success)
-                         saveUserDetails(loginResult.success.displayName)
-                        username?.text?.toString()
-                    }
-                    else -> ""
-                }
-            val intent = Intent()
-            intent.putExtra(USERNAMEKEY, userName)
-            setResult(Activity.RESULT_OK, intent)
-
-            //Complete and destroy login activity once successful
-            finish()
+            displayResult(loginResult)
         })
 
-        username.afterTextChanged {
-            loginViewModel.loginDataChanged(
-                username.text.toString(),
-                password.text.toString()
-            )
-        }
+        setClickListeners()
+    }
 
-        password.apply {
+    private fun checkForLoginFormState(loginState: LoginFormState) {
+        // disable login button unless both username / password is valid
+        login?.apply {
+            isClickable = loginState.isDataValid
+            login?.isEnabled = loginState.isDataValid
+        }
+        if (loginState.usernameError != null) {
+            username?.error = getString(loginState.usernameError)
+        }
+        if (loginState.passwordError != null) {
+            password?.error = getString(loginState.passwordError)
+        }
+    }
+
+    private fun displayResult(loginResult: LoginResult) {
+        loading?.gone()
+        when {
+            loginResult.error != null -> {
+                showLoginFailed(loginResult.error)
+            }
+            loginResult.success != null -> {
+                updateUiWithUser(loginResult.success.u_name)
+                if (switch?.isChecked == true)
+                    saveUserDetails(loginResult.success)
+
+                val intent = Intent()
+                intent.putExtra(USERDETAILSKEY, loginResult.success)
+                setResult(Activity.RESULT_OK, intent)
+                //Complete and destroy login activity once successful
+                finish()
+            }
+        }
+    }
+
+    fun setClickListeners() {
+        username?.afterTextChanged {
+            checkForDataChange()
+        }
+        password?.apply {
             afterTextChanged {
-                loginViewModel.loginDataChanged(
-                    username.text.toString(),
-                    password.text.toString()
-                )
+                checkForDataChange()
             }
 
             setOnEditorActionListener { _, actionId, _ ->
                 when (actionId) {
                     EditorInfo.IME_ACTION_DONE ->
-                        loginViewModel.login(
-                            username.text.toString(),
-                            password.text.toString()
-                        )
+                        performLogin()
                 }
                 false
             }
+        }
+        login?.setOnClickListener {
+            performLogin()
+        }
+        launchRegistration?.setOnClickListener {
+            launchRegistrationActivity()
+        }
 
-            login.setOnClickListener {
-                loading.visibility = View.VISIBLE
-                loginViewModel.login(username.text.toString(), password.text.toString())
-            }
+    }
+
+    fun performLogin() {
+        GlobalScope.launch(Dispatchers.Main) {
+            loginViewModel.login(
+                username?.text.toString(),
+                password?.text.toString()
+            )
         }
     }
 
-    private fun updateUiWithUser(model: LoggedInUserView) {
-//        val welcome = getString(R.string.welcome)
-//        val displayName = model.displayName
+    private fun launchRegistrationActivity() {
+        val intent = Intent(this, RegistrationActivity::class.java)
+        startActivity(intent)
+    }
+
+    private fun updateUiWithUser(model: String) {
         Toast.makeText(
             applicationContext,
             "Login Successful",
@@ -131,34 +152,16 @@ class LoginActivity : AppCompatActivity() {
         Toast.makeText(applicationContext, errorString, Toast.LENGTH_SHORT).show()
     }
 
-    private fun displayLayout() {
-        val TIME_OUT = 100L
-        Handler().postDelayed({
-            val transition = Slide(Gravity.END)
-            transition.duration = 600L
-            transition.addTarget(R.id.background_layout)
-            TransitionManager.beginDelayedTransition(main_layout, transition)
-            background_layout?.setVisibility(View.VISIBLE)
-        }, TIME_OUT)
-    }
-
-    private fun saveUserDetails(userName: String) {
+    private fun saveUserDetails(userDetails: UserDetails) {
         val prefs = SharedPreferenceUtils.customPrefs(this, LOGIN_PREFERENCE)
-        prefs.set(USERNAMEKEY, userName)
+        val json = Gson().toJson(userDetails)
+        prefs.set(USERDETAILSKEY, json)
     }
-}
 
-/**
- * Extension function to simplify setting an afterTextChanged action to EditText components.
- */
-fun EditText.afterTextChanged(afterTextChanged: (String) -> Unit) {
-    this.addTextChangedListener(object : TextWatcher {
-        override fun afterTextChanged(editable: Editable?) {
-            afterTextChanged.invoke(editable.toString())
-        }
-
-        override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
-
-        override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
-    })
+    fun checkForDataChange() {
+        loginViewModel.loginDataChanged(
+            username?.text.toString(),
+            password?.text.toString()
+        )
+    }
 }

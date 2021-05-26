@@ -2,11 +2,24 @@ package com.example.custompreferences
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKeys
 
 object SharedPreferenceUtils {
 
-    fun customPrefs(context: Context, name: String): SharedPreferences
-            = context.getSharedPreferences(name, Context.MODE_PRIVATE)
+    var masterKeyAlias: String = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+
+    fun customPrefs(context: Context, fileName: String): SharedPreferences
+        //            = context.getSharedPreferences(name, Context.MODE_PRIVATE)
+        = EncryptedSharedPreferences.create(
+            fileName,
+            masterKeyAlias,
+            context,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+
+
 
     private inline fun SharedPreferences.edit(operation: (SharedPreferences.Editor) -> Unit) {
         val editor = this.edit()

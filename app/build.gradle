@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId "com.example.yofoddies"
-        minSdkVersion 16
+        minSdkVersion 24
         targetSdkVersion 30
         versionCode 1
         versionName "1.0"
@@ -22,6 +22,11 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 dependencies {
@@ -33,9 +38,17 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+    implementation 'com.google.code.gson:gson:2.8.6'
+
+
     implementation project(':loginModule')
+    implementation project(':dashboardModule')
     implementation project(':customPreferences')
+
+    implementation project(':networkModule')
 
     implementation 'com.github.bumptech.glide:glide:4.0.0'
     implementation 'com.agrawalsuneet.androidlibs:dotsloader:1.4'
+    implementation 'com.scwang.wave:MultiWaveHeader:1.0.0'
+
 }

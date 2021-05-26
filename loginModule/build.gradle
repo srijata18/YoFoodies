@@ -7,7 +7,7 @@ android {
     buildToolsVersion "30.0.0"
 
     defaultConfig {
-        minSdkVersion 16
+        minSdkVersion 21
         targetSdkVersion 30
         versionCode 1
         versionName "1.0"
@@ -27,8 +27,8 @@ android {
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    implementation 'androidx.core:core-ktx:1.3.2'
-    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'androidx.core:core-ktx:1.5.0'
+    implementation 'androidx.appcompat:appcompat:1.3.0'
     implementation 'com.google.android.material:material:1.3.0'
     implementation 'androidx.annotation:annotation:1.2.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
@@ -36,6 +36,15 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.9'
+    implementation 'com.google.code.gson:gson:2.8.6'
 
+
+    implementation project(':registrationModule')
     implementation project(':customPreferences')
+    //network
+    implementation "com.squareup.retrofit2:retrofit:2.6.1"
+    implementation project(':networkModule')
+    implementation 'com.scwang.wave:MultiWaveHeader:1.0.0'
+
 }
